@@ -35,7 +35,8 @@ A perfect strategy, ensuring filling the screen, but the speed is slow.
 python snaky_ai_v1.py
 ```
 
-<img src="./images/snaky_ai_v1.gif" width="350">
+<img src="https://ooo.0o0.ooo/2017/03/19/58ce1d1270940.gif
+" width="350">
 
 
 ### AI version 2 - Based on BFS
