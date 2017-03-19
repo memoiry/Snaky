@@ -4,6 +4,7 @@ Snaky is a Snake game series including a basic one-player version and three vers
 
 The project is implemented in Python.
 
+**If you like it, Please give it a star, Thanks!**
 ### Require
 
 You should have `pygame` module installed.
