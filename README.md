@@ -54,7 +54,7 @@ python snaky_ai_v2.py
 
 
 
-### AI version 3 - Based on BFS, virtual run and follow the tail
+### AI version 3 - Based on BFS(shortest path), forward checking and follow the tail(longest path).
 
 In this AI version. The algorithm is constructed as follow.
 
