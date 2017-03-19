@@ -4,6 +4,10 @@
 
 You should have `pygame` installed.
 
+### Final Version Demo
+
+<img src="./images/snaky_ai_v3.gif" width="350">
+
 ## Usage
 
 ### Basic function - One player
@@ -16,7 +20,7 @@ cd Snaky
 python snaky.py
 ```
 
-![](./images/snaky_.gif)
+<img src="./images/snaky_.gif" width="350">
 
 It was actually manually controlled by myself(hard to control while recording the gif....so it's poor..)
 
@@ -31,7 +35,8 @@ A perfect (ensure filling the screen, but the speed is slow)
 python snaky_ai_v1.py
 ```
 
-![](./images/snaky_ai_v1.gif)
+<img src="./images/snaky_ai_v1.gif" width="350">
+
 
 ### AI version 2 - Based on BFS
 
@@ -41,7 +46,8 @@ A simple BFS strategy make the snake trapped in local optimal point and not cons
 python snaky_ai_v2.py
 ```
 
-![](./images/snaky_ai_v2.gif)
+<img src="./images/snaky_ai_v2.gif" width="350">
+
 
 
 ### AI version 3 - Based on BFS, virtual run and follow the tail
@@ -60,7 +66,8 @@ To find snake `S1`'s next moving direction `D`, the AI snake follows the steps b
 python snaky_ai_v3.py
 ```
 
-![](./images/snaky_ai_v3.gif)
+<img src="./images/snaky_ai_v3.gif" width="350">
+
 
 
 Enjoy!
