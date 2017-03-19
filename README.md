@@ -29,7 +29,7 @@ It was actually manually controlled by myself(hard to control while recording th
 
 ### AI version 1 - Based on Hamiltonian path
 
-A perfect (ensure filling the screen, but the speed is slow)
+A perfect strategy, ensuring filling the screen, but the speed is slow.
 
 ```bash
 python snaky_ai_v1.py
@@ -69,7 +69,7 @@ python snaky_ai_v3.py
 <img src="./images/snaky_ai_v3.gif" width="350">
 
 
-
 Enjoy!
+
 
 
