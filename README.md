@@ -1,12 +1,12 @@
 # Snaky
 
-Snaky is a projects including a basic one-player version, and three versions of AI to play Snake automatically.
+Snaky is a Snake game series including a basic one-player version and three versions of AI to play Snake automatically.
 
 The project is implemented in Python.
 
 ### Require
 
-You should have `pygame` installed.
+You should have `pygame` module installed.
 
 ### Final Version Demo
 
