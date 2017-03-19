@@ -1,4 +1,4 @@
-# Wormy (a Nibbles clone)
+# Snaky (a Nibbles clone)
 # By Al Sweigart al@inventwithpython.com
 # http://inventwithpython.com/pygame
 # Released under a "Simplified BSD" license
@@ -6,12 +6,12 @@
 import random, pygame, sys
 from pygame.locals import *
 
-FPS = 80
+FPS = 15
 ##WINDOWWIDTH = 640
 #WINDOWHEIGHT = 480
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
-CELLSIZE = 80
+CELLSIZE = 40
 assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell size."
 assert WINDOWHEIGHT % CELLSIZE == 0, "Window height must be a multiple of cell size."
 CELLWIDTH = int(WINDOWWIDTH / CELLSIZE)
@@ -40,57 +40,42 @@ def main():
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
-    pygame.display.set_caption('Wormy')
+    pygame.display.set_caption('Snaky')
 
     showStartScreen()
     while True:
         runGame()
         showGameOverScreen()
 
-def get_direction(head_, last_direction):
-    if head_['x'] == 1:
-        if head_['y'] == CELLHEIGHT - 1:
-            return LEFT
-        elif head_['y'] == 0:
-            return RIGHT
-        if last_direction == LEFT:
-            return DOWN
-        elif last_direction == DOWN:
-            return RIGHT
-    elif head_['x'] >= 1 and head_['x'] <= CELLWIDTH-2:
-        if last_direction == RIGHT:
-            return RIGHT
-        elif last_direction == LEFT:
-            return LEFT
-    elif head_['x'] == (CELLWIDTH-1):
-        if last_direction == RIGHT:
-            return DOWN
-        elif last_direction == DOWN:
-            return LEFT
-    elif head_['x'] == 0:
-        if head_['y'] != 0:
-            return UP
-        else:
-            return RIGHT
-
 
 def runGame():
     # Set a random start point.
-    startx = random.randint(0, CELLWIDTH -1)
-    starty = random.randint(0, CELLHEIGHT -1)
+    startx = random.randint(5, CELLWIDTH - 6)
+    starty = random.randint(5, CELLHEIGHT - 6)
     wormCoords = [{'x': startx,     'y': starty},
                   {'x': startx - 1, 'y': starty},
                   {'x': startx - 2, 'y': starty}]
     direction = RIGHT
 
     # Start the apple in a random place.
-    apple = getRandomLocation()
+    apple = getRandomLocation(wormCoords)
 
     while True: # main game loop
+        pre_direction = direction
         for event in pygame.event.get(): # event handling loop
             if event.type == QUIT:
                 terminate()
-        direction = get_direction(wormCoords[0], direction)
+            elif event.type == KEYDOWN:
+                if (event.key == K_LEFT or event.key == K_a) and direction != RIGHT:
+                    direction = LEFT
+                elif (event.key == K_RIGHT or event.key == K_d) and direction != LEFT:
+                    direction = RIGHT
+                elif (event.key == K_UP or event.key == K_w) and direction != DOWN:
+                    direction = UP
+                elif (event.key == K_DOWN or event.key == K_s) and direction != UP:
+                    direction = DOWN
+                elif event.key == K_ESCAPE:
+                    terminate()
         # check if the worm has hit itself or the edge
         if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
             return # game over
@@ -101,11 +86,13 @@ def runGame():
         # check if worm has eaten an apply
         if wormCoords[HEAD]['x'] == apple['x'] and wormCoords[HEAD]['y'] == apple['y']:
             # don't remove worm's tail segment
-            apple = getRandomLocation() # set a new apple somewhere
+            apple = getRandomLocation(wormCoords) # set a new apple somewhere
         else:
             del wormCoords[-1] # remove worm's tail segment
 
         # move the worm by adding a segment in the direction it is moving
+        if not examine_direction(direction, pre_direction):
+            direction = pre_direction
         if direction == UP:
             newHead = {'x': wormCoords[HEAD]['x'], 'y': wormCoords[HEAD]['y'] - 1}
         elif direction == DOWN:
@@ -122,6 +109,21 @@ def runGame():
         drawScore(len(wormCoords) - 3)
         pygame.display.update()
         FPSCLOCK.tick(FPS)
+
+def examine_direction(temp , direction):
+    if direction == UP:
+        if temp == DOWN:
+            return False
+    elif direction == RIGHT:
+        if temp == LEFT:
+            return False
+    elif direction == LEFT:
+        if temp == RIGHT:
+            return False
+    elif direction == DOWN:
+        if temp == UP:
+            return False
+    return True
 
 def drawPressKeyMsg():
     pressKeySurf = BASICFONT.render('Press a key to play.', True, DARKGRAY)
@@ -144,8 +146,8 @@ def checkForKeyPress():
 
 def showStartScreen():
     titleFont = pygame.font.Font('freesansbold.ttf', 100)
-    titleSurf1 = titleFont.render('Wormy!', True, WHITE, DARKGREEN)
-    titleSurf2 = titleFont.render('Wormy!', True, GREEN)
+    titleSurf1 = titleFont.render('Snaky!', True, WHITE, DARKGREEN)
+    titleSurf2 = titleFont.render('Snaky!', True, GREEN)
 
     degrees1 = 0
     degrees2 = 0
@@ -167,7 +169,7 @@ def showStartScreen():
             pygame.event.get() # clear event queue
             return
         pygame.display.update()
-        #FPSCLOCK.tick(FPS)
+        FPSCLOCK.tick(FPS)
         degrees1 += 3 # rotate by 3 degrees each frame
         degrees2 += 7 # rotate by 7 degrees each frame
 
@@ -177,9 +179,18 @@ def terminate():
     sys.exit()
 
 
-def getRandomLocation():
-    return {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
 
+def getRandomLocation(worm):
+    temp = {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
+    while test_not_ok(temp, worm):
+        temp = {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
+    return temp
+
+def test_not_ok(temp, worm):
+    for body in worm:
+        if temp['x'] == body['x'] and temp['y'] == body['y']:
+            return True
+    return False
 
 def showGameOverScreen():
     gameOverFont = pygame.font.Font('freesansbold.ttf', 150)

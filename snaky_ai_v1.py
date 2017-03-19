@@ -1,12 +1,17 @@
+# Snaky (a Nibbles clone)
+# By Al Sweigart al@inventwithpython.com
+# http://inventwithpython.com/pygame
+# Released under a "Simplified BSD" license
+
 import random, pygame, sys
 from pygame.locals import *
 
 FPS = 80
 ##WINDOWWIDTH = 640
 #WINDOWHEIGHT = 480
-WINDOWWIDTH = 600
+WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
-CELLSIZE = 60
+CELLSIZE = 80
 assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell size."
 assert WINDOWHEIGHT % CELLSIZE == 0, "Window height must be a multiple of cell size."
 CELLWIDTH = int(WINDOWWIDTH / CELLSIZE)
@@ -21,74 +26,12 @@ DARKGREEN = (  0, 155,   0)
 DARKGRAY  = ( 40,  40,  40)
 BGCOLOR = BLACK
 
-
-apple = {'x':0,'y':0}
-
 UP = 'up'
 DOWN = 'down'
 LEFT = 'left'
 RIGHT = 'right'
 
-direction = UP
-DIRECTION = [UP,DOWN,LEFT,RIGHT]
-
 HEAD = 0 # syntactic sugar: index of the worm's head
-
-
-
-distance = []
-
-for y in range(CELLHEIGHT):
-    distance.append([])
-    for x in range(CELLWIDTH):
-        distance[y].append(8888)
-
-def into_queue((x, y), queue, visited, worm):
-    if (x, y) == (apple['x'],apple['y']):
-        return False
-    elif x < 0 or x >= CELLWIDTH:
-        return False
-    elif y < 0 or y >= CELLHEIGHT:
-        return False
-    elif (x, y) in queue:
-        return False
-    elif (x, y) in visited:
-        return False
-    elif is_snake(x, y, worm):
-        return False
-    else:
-        return True
-
-def is_snake(x,y,worm):
-    for body in worm:
-        if body['x'] == x and body['y'] == y:
-            return True
-    return False
-
-
-def cal_distance(worm):
-    queue = [(apple['x'],apple['y'])]
-    visited = []
-    for y in range(CELLHEIGHT):
-        for x in range(CELLWIDTH):
-            distance[y][x] = 9999
-
-    distance[apple['y']][apple['x']] = 0
-
-    while len(queue) != 0:
-        head = queue[0]
-        visited.append(head)
-        up_grid = head[0], head[1] - 1
-        down_grid = head[0], head[1] + 1
-        left_grid = head[0] - 1, head[1]
-        right_grid = head[0] + 1, head[1]
-
-        for grid in [up_grid, down_grid, left_grid, right_grid]:
-            if into_queue(grid, queue, visited,worm):
-                queue.append(grid)
-                if distance[grid[1]][grid[0]] != 99999:
-                    distance[grid[1]][grid[0]] = distance[head[1]][head[0]] + 1
-        queue.pop(0)
 
 def main():
     global FPSCLOCK, DISPLAYSURF, BASICFONT
@@ -97,7 +40,7 @@ def main():
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
-    pygame.display.set_caption('Wormy')
+    pygame.display.set_caption('Snaky')
 
     showStartScreen()
     while True:
@@ -130,39 +73,8 @@ def get_direction(head_, last_direction):
         else:
             return RIGHT
 
-def can_move((x, y), worm):
-    if x < 0 or x >= CELLWIDTH:
-        return False
-    elif y < 0 or y >= CELLHEIGHT:
-        return False
-    elif is_snake(x, y,worm):
-        return False
-    elif (x, y) == (worm[HEAD]['x'], worm[HEAD]['y']):
-        return False
-    else:
-        return True
-
-def test_not_ok(temp, worm):
-    for body in worm:
-        if temp['x'] == body['x'] and temp['y'] == body['y']:
-            return True
-    return False
-
-def update_dirc(now, direc):
-    loc = {'x':0,'y':0}
-    if direc == UP:
-        loc = {'x':now['x'],'y':now['y']-1}
-    elif direc == DOWN:
-        loc = {'x':now['x'],'y':now['y']+1}
-    elif direc == RIGHT:
-        loc = {'x':now['x']+1,'y':now['y']}
-    elif direc == LEFT:
-        loc = {'x':now['x']-1,'y':now['y']}
-    return loc
-
 
 def runGame():
-    global running_,apple,DIRECTION
     # Set a random start point.
     startx = random.randint(0, CELLWIDTH -1)
     starty = random.randint(0, CELLHEIGHT -1)
@@ -170,63 +82,15 @@ def runGame():
                   {'x': startx - 1, 'y': starty},
                   {'x': startx - 2, 'y': starty}]
     direction = RIGHT
-    running_ = True
+
     # Start the apple in a random place.
     apple = getRandomLocation(wormCoords)
-    cal_distance(wormCoords)
+
     while True: # main game loop
         for event in pygame.event.get(): # event handling loop
             if event.type == QUIT:
                 terminate()
-        four_dis = [99999, 99999, 99999, 99999]
-        if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] - 1), wormCoords):
-            four_dis[0] = distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']]
-
-        if can_move((wormCoords[HEAD]['x'] + 1, wormCoords[HEAD]['y']), wormCoords):
-            four_dis[1] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1]
-
-        if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] + 1), wormCoords):
-            four_dis[2] = distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']]
-
-        if can_move((wormCoords[HEAD]['x'] - 1, wormCoords[HEAD]['y']), wormCoords):
-            four_dis[3] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1]
-
-        min_num = min(four_dis)
-
-        if four_dis[0] < 99999 and distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']] == min_num and direction != DOWN:
-            direction = UP
-
-        elif four_dis[1] < 99999 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1] == min_num and direction != "LEFT":
-            direction = RIGHT
-
-        elif four_dis[2] < 99999 and distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']] == min_num and direction != "UP":
-            direction = DOWN
-
-        elif four_dis[3] < 99999 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1] == min_num and direction != RIGHT:
-            direction = LEFT
-
-        else:
-            print direction
-            index_ = 0
-            for i in xrange(4):
-                temp = update_dirc(wormCoords[HEAD],DIRECTION[i])
-                if can_move(temp,wormCoords):
-                    index_ = i
-                    break
-            direction_new = DIRECTION[index_]
-            if direction == UP:
-                if direction_new != DOWN:
-                    direction = direction_new
-            elif direction == DOWN:
-                if direction_new != UP:
-                    direction = direction_new
-            elif direction == RIGHT:
-                if direction_new != LEFT:
-                    direction = direction_new            
-            elif direction == LEFT:
-                if direction_new != RIGHT:
-                    direction = direction_new
-            print direction
+        direction = get_direction(wormCoords[0], direction)
         # check if the worm has hit itself or the edge
         if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
             return # game over
@@ -251,14 +115,13 @@ def runGame():
         elif direction == RIGHT:
             newHead = {'x': wormCoords[HEAD]['x'] + 1, 'y': wormCoords[HEAD]['y']}
         wormCoords.insert(0, newHead)
-        cal_distance(wormCoords)
         DISPLAYSURF.fill(BGCOLOR)
         drawGrid()
         drawWorm(wormCoords)
         drawApple(apple)
         drawScore(len(wormCoords) - 3)
         pygame.display.update()
-        #FPSCLOCK.tick(FPS)
+        FPSCLOCK.tick(FPS)
 
 def drawPressKeyMsg():
     pressKeySurf = BASICFONT.render('Press a key to play.', True, DARKGRAY)
@@ -281,8 +144,8 @@ def checkForKeyPress():
 
 def showStartScreen():
     titleFont = pygame.font.Font('freesansbold.ttf', 100)
-    titleSurf1 = titleFont.render('Wormy!', True, WHITE, DARKGREEN)
-    titleSurf2 = titleFont.render('Wormy!', True, GREEN)
+    titleSurf1 = titleFont.render('Snaky!', True, WHITE, DARKGREEN)
+    titleSurf2 = titleFont.render('Snaky!', True, GREEN)
 
     degrees1 = 0
     degrees2 = 0
@@ -313,11 +176,18 @@ def terminate():
     pygame.quit()
     sys.exit()
 
+
 def getRandomLocation(worm):
     temp = {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
     while test_not_ok(temp, worm):
         temp = {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
     return temp
+
+def test_not_ok(temp, worm):
+    for body in worm:
+        if temp['x'] == body['x'] and temp['y'] == body['y']:
+            return True
+    return False
 
 
 def showGameOverScreen():
@@ -371,7 +241,6 @@ def drawGrid():
     for y in range(0, WINDOWHEIGHT, CELLSIZE): # draw horizontal lines
         pygame.draw.line(DISPLAYSURF, DARKGRAY, (0, y), (WINDOWWIDTH, y))
 
-running_ = True
 
 if __name__ == '__main__':
     main()

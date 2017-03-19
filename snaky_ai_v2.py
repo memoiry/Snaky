@@ -1,16 +1,16 @@
 import random, pygame, sys
 from pygame.locals import *
 
-FPS = 100
+FPS = 80
 ##WINDOWWIDTH = 640
 #WINDOWHEIGHT = 480
 WINDOWWIDTH = 600
 WINDOWHEIGHT = 480
-CELLSIZE = 60
+CELLSIZE = 40
 assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell size."
 assert WINDOWHEIGHT % CELLSIZE == 0, "Window height must be a multiple of cell size."
 CELLWIDTH = int(WINDOWWIDTH / CELLSIZE)
-CELLHEIGHT = int(WINDOWHEIGHT / CELLSIZE) 
+CELLHEIGHT = int(WINDOWHEIGHT / CELLSIZE)
 
 #             R    G    B
 WHITE     = (255, 255, 255)
@@ -22,6 +22,7 @@ DARKGRAY  = ( 40,  40,  40)
 BGCOLOR = BLACK
 
 
+apple = {'x':0,'y':0}
 
 UP = 'up'
 DOWN = 'down'
@@ -42,7 +43,7 @@ for y in range(CELLHEIGHT):
     for x in range(CELLWIDTH):
         distance[y].append(8888)
 
-def into_queue((x, y), queue, visited, worm,apple):
+def into_queue((x, y), queue, visited, worm):
     if (x, y) == (apple['x'],apple['y']):
         return False
     elif x < 0 or x >= CELLWIDTH:
@@ -65,7 +66,7 @@ def is_snake(x,y,worm):
     return False
 
 
-def cal_distance(worm,apple):
+def cal_distance(worm):
     queue = [(apple['x'],apple['y'])]
     visited = []
     for y in range(CELLHEIGHT):
@@ -83,9 +84,10 @@ def cal_distance(worm,apple):
         right_grid = head[0] + 1, head[1]
 
         for grid in [up_grid, down_grid, left_grid, right_grid]:
-            if into_queue(grid, queue, visited,worm,apple):
+            if into_queue(grid, queue, visited,worm):
                 queue.append(grid)
-                distance[grid[1]][grid[0]] = distance[head[1]][head[0]] + 1
+                if distance[grid[1]][grid[0]] != 99999:
+                    distance[grid[1]][grid[0]] = distance[head[1]][head[0]] + 1
         queue.pop(0)
 
 def main():
@@ -95,12 +97,38 @@ def main():
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
-    pygame.display.set_caption('Wormy')
+    pygame.display.set_caption('Snaky')
 
     showStartScreen()
     while True:
         runGame()
         showGameOverScreen()
+
+def get_direction(head_, last_direction):
+    if head_['x'] == 1:
+        if head_['y'] == CELLHEIGHT - 1:
+            return LEFT
+        elif head_['y'] == 0:
+            return RIGHT
+        if last_direction == LEFT:
+            return DOWN
+        elif last_direction == DOWN:
+            return RIGHT
+    elif head_['x'] >= 1 and head_['x'] <= CELLWIDTH-2:
+        if last_direction == RIGHT:
+            return RIGHT
+        elif last_direction == LEFT:
+            return LEFT
+    elif head_['x'] == (CELLWIDTH-1):
+        if last_direction == RIGHT:
+            return DOWN
+        elif last_direction == DOWN:
+            return LEFT
+    elif head_['x'] == 0:
+        if head_['y'] != 0:
+            return UP
+        else:
+            return RIGHT
 
 def can_move((x, y), worm):
     if x < 0 or x >= CELLWIDTH:
@@ -114,6 +142,11 @@ def can_move((x, y), worm):
     else:
         return True
 
+def test_not_ok(temp, worm):
+    for body in worm:
+        if temp['x'] == body['x'] and temp['y'] == body['y']:
+            return True
+    return False
 
 def update_dirc(now, direc):
     loc = {'x':0,'y':0}
@@ -127,10 +160,24 @@ def update_dirc(now, direc):
         loc = {'x':now['x']-1,'y':now['y']}
     return loc
 
-def virtual_run(wormCoords, apple,direction):
-    wormCoords = list(wormCoords)
-    cal_distance(wormCoords,apple)
-    while wormCoords[HEAD]['x'] != apple['x'] or wormCoords[HEAD]['y'] != apple['y']:
+
+def runGame():
+    global running_,apple,DIRECTION
+    # Set a random start point.
+    startx = random.randint(0, CELLWIDTH -1)
+    starty = random.randint(0, CELLHEIGHT -1)
+    wormCoords = [{'x': startx,     'y': starty},
+                  {'x': startx - 1, 'y': starty},
+                  {'x': startx - 2, 'y': starty}]
+    direction = RIGHT
+    running_ = True
+    # Start the apple in a random place.
+    apple = getRandomLocation(wormCoords)
+    cal_distance(wormCoords)
+    while True: # main game loop
+        for event in pygame.event.get(): # event handling loop
+            if event.type == QUIT:
+                terminate()
         four_dis = [99999, 99999, 99999, 99999]
         if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] - 1), wormCoords):
             four_dis[0] = distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']]
@@ -157,175 +204,29 @@ def virtual_run(wormCoords, apple,direction):
 
         elif four_dis[3] < 99999 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1] == min_num and direction != RIGHT:
             direction = LEFT
-        if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
-            return # game over
-        for wormBody in wormCoords[1:]:
-            if wormBody['x'] == wormCoords[HEAD]['x'] and wormBody['y'] == wormCoords[HEAD]['y']:
-                return
-        del wormCoords[-1] # remove worm's tail segment
 
-        # move the worm by adding a segment in the direction it is moving
-        if direction == UP:
-            newHead = {'x': wormCoords[HEAD]['x'], 'y': wormCoords[HEAD]['y'] - 1}
-        elif direction == DOWN:
-            newHead = {'x': wormCoords[HEAD]['x'], 'y': wormCoords[HEAD]['y'] + 1}
-        elif direction == LEFT:
-            newHead = {'x': wormCoords[HEAD]['x'] - 1, 'y': wormCoords[HEAD]['y']}
-        elif direction == RIGHT:
-            newHead = {'x': wormCoords[HEAD]['x'] + 1, 'y': wormCoords[HEAD]['y']}
-        wormCoords.insert(0, newHead)
-        cal_distance(wormCoords,apple)
-    cal_distance(wormCoords,wormCoords[-1])
-    if distance[wormCoords[-1]['y']][wormCoords[-1]['x']] != 9999:
-        return True
-    return False
-
-def distance_(x,y):
-    return abs(x['x']-y['x']) + abs(x['y'] - x['y'])
-
-
-def any_possible_move(worm,apple,direction):
-    temp_direc = UP
-    max_dis = 0
-    for i in xrange(4):
-        temp = update_dirc(worm[0],DIRECTION[i])
-        if can_move((temp['x'],temp['y']),worm):
-            if (distance_(temp, apple) > max_dis) and (examine_direction(temp, direction)):
-                max_dis = distance_(temp, apple)
-                temp_direc = temp
-    return temp_direc
-
-def examine_direction(temp , direction):
-    if direction == UP:
-        if temp == DOWN:
-            return False
-    elif direction == RIGHT:
-        if temp == LEFT:
-            return False
-    elif direction == LEFT:
-        if temp == RIGHT:
-            return False
-    elif direction == DOWN:
-        if temp == UP:
-            return False
-    return True
-
-def runGame():
-    global running_,DIRECTION
-    # Set a random start point.
-    startx = random.randint(0, CELLWIDTH -1)
-    starty = random.randint(0, CELLHEIGHT -1)
-    wormCoords = [{'x': startx,     'y': starty},
-                  {'x': startx - 1, 'y': starty},
-                  {'x': startx - 2, 'y': starty}]
-    direction = RIGHT
-    running_ = True
-    # Start the apple in a random place.
-    apple = getRandomLocation(wormCoords)
-    cal_distance(wormCoords,apple)
-    while True: # main game loop
-        for event in pygame.event.get(): # event handling loop
-            if event.type == QUIT:
-                terminate()
-        new_direction = None
-        if (distance[apple['y']][apple['x']] < 9999):
-            if virtual_run(wormCoords, apple, direction):
-                cal_distance(wormCoords,apple)
-                four_dis = [99999] * 4
-                if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] - 1), wormCoords):
-                    four_dis[0] = distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']]
-
-                if can_move((wormCoords[HEAD]['x'] + 1, wormCoords[HEAD]['y']), wormCoords):
-                    four_dis[1] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1]
-
-                if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] + 1), wormCoords):
-                    four_dis[2] = distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']]
-
-                if can_move((wormCoords[HEAD]['x'] - 1, wormCoords[HEAD]['y']), wormCoords):
-                    four_dis[3] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1]
-
-                max_num = min(four_dis)
-
-                if four_dis[0] < 99999 and distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']] == max_num and direction != DOWN:
-                    new_direction = UP
-
-                elif four_dis[1] < 99999 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1] == max_num and direction != LEFT:
-                    new_direction = RIGHT
-
-                elif four_dis[2] < 99999 and distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']] == max_num and direction != UP:
-                    new_direction = DOWN
-
-                elif four_dis[3] < 99999 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1] == max_num and direction != RIGHT:
-                    new_direction = LEFT
-            else:
-                four_dis = [-1] * 4
-                cal_distance(wormCoords, wormCoords[-1])
-                if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] - 1), wormCoords):
-                    four_dis[0] = distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']]
-
-                if can_move((wormCoords[HEAD]['x'] + 1, wormCoords[HEAD]['y']), wormCoords):
-                    four_dis[1] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1]
-
-                if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] + 1), wormCoords):
-                    four_dis[2] = distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']]
-
-                if can_move((wormCoords[HEAD]['x'] - 1, wormCoords[HEAD]['y']), wormCoords):
-                    four_dis[3] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1]
-
-                max_num = 0
-                for i in four_dis:
-                    if i != 9999:
-                        if i > max_num:
-                            max_num = i
-
-                if four_dis[0] > -1 and distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']] == max_num and direction != DOWN:
-                    new_direction = UP
-
-                elif four_dis[1] > -1 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1] == max_num and direction != LEFT:
-                    new_direction = RIGHT
-
-                elif four_dis[2] > -1 and distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']] == max_num and direction != UP:
-                    new_direction = DOWN
-
-                elif four_dis[3] > -1 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1] == max_num and direction != RIGHT:
-                    new_direction = LEFT
         else:
-            four_dis = [-1] * 4
-            cal_distance(wormCoords, wormCoords[-1])
-            if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] - 1), wormCoords):
-                four_dis[0] = distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']]
-
-            if can_move((wormCoords[HEAD]['x'] + 1, wormCoords[HEAD]['y']), wormCoords):
-                four_dis[1] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1]
-
-            if can_move((wormCoords[HEAD]['x'], wormCoords[HEAD]['y'] + 1), wormCoords):
-                four_dis[2] = distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']]
-
-            if can_move((wormCoords[HEAD]['x'] - 1, wormCoords[HEAD]['y']), wormCoords):
-                four_dis[3] = distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1]
-
-            max_num = 0
-            for i in four_dis:
-                if i != 9999:
-                    if i > max_num:
-                        max_num = i
-
-            if four_dis[0] > -1 and distance[wormCoords[HEAD]['y'] - 1][wormCoords[HEAD]['x']] == max_num and direction != DOWN:
-                new_direction = UP
-
-            elif four_dis[1] > -1 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] + 1] == max_num and direction != LEFT:
-                new_direction = RIGHT
-
-            elif four_dis[2] > -1 and distance[wormCoords[HEAD]['y'] + 1][wormCoords[HEAD]['x']] == max_num and direction != UP:
-                new_direction = DOWN
-
-            elif four_dis[3] > -1 and distance[wormCoords[HEAD]['y']][wormCoords[HEAD]['x'] - 1] == max_num and direction != RIGHT:
-                new_direction = LEFT
-        if new_direction == None:
-            direction = any_possible_move(wormCoords, apple, direction)
-            print "Test"
-        else:
-            direction = new_direction
+            print direction
+            index_ = 0
+            for i in xrange(4):
+                temp = update_dirc(wormCoords[HEAD],DIRECTION[i])
+                if can_move(temp,wormCoords):
+                    index_ = i
+                    break
+            direction_new = DIRECTION[index_]
+            if direction == UP:
+                if direction_new != DOWN:
+                    direction = direction_new
+            elif direction == DOWN:
+                if direction_new != UP:
+                    direction = direction_new
+            elif direction == RIGHT:
+                if direction_new != LEFT:
+                    direction = direction_new            
+            elif direction == LEFT:
+                if direction_new != RIGHT:
+                    direction = direction_new
+            print direction
         # check if the worm has hit itself or the edge
         if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
             return # game over
@@ -335,8 +236,8 @@ def runGame():
 
         # check if worm has eaten an apply
         if wormCoords[HEAD]['x'] == apple['x'] and wormCoords[HEAD]['y'] == apple['y']:
-            # don't remove worm's tail 
-            apple = getRandomLocation(wormCoords)
+            # don't remove worm's tail segment
+            apple = getRandomLocation(wormCoords) # set a new apple somewhere
         else:
             del wormCoords[-1] # remove worm's tail segment
 
@@ -349,8 +250,8 @@ def runGame():
             newHead = {'x': wormCoords[HEAD]['x'] - 1, 'y': wormCoords[HEAD]['y']}
         elif direction == RIGHT:
             newHead = {'x': wormCoords[HEAD]['x'] + 1, 'y': wormCoords[HEAD]['y']}
-        wormCoords.insert(0, newHead) # set a new apple somewhere
-        cal_distance(wormCoords,apple)
+        wormCoords.insert(0, newHead)
+        cal_distance(wormCoords)
         DISPLAYSURF.fill(BGCOLOR)
         drawGrid()
         drawWorm(wormCoords)
@@ -380,8 +281,8 @@ def checkForKeyPress():
 
 def showStartScreen():
     titleFont = pygame.font.Font('freesansbold.ttf', 100)
-    titleSurf1 = titleFont.render('Wormy!', True, WHITE, DARKGREEN)
-    titleSurf2 = titleFont.render('Wormy!', True, GREEN)
+    titleSurf1 = titleFont.render('Snaky!', True, WHITE, DARKGREEN)
+    titleSurf2 = titleFont.render('Snaky!', True, GREEN)
 
     degrees1 = 0
     degrees2 = 0
@@ -403,7 +304,7 @@ def showStartScreen():
             pygame.event.get() # clear event queue
             return
         pygame.display.update()
-        FPSCLOCK.tick(FPS)
+        #FPSCLOCK.tick(FPS)
         degrees1 += 3 # rotate by 3 degrees each frame
         degrees2 += 7 # rotate by 7 degrees each frame
 
@@ -412,18 +313,11 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-
 def getRandomLocation(worm):
     temp = {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
     while test_not_ok(temp, worm):
         temp = {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
     return temp
-
-def test_not_ok(temp, worm):
-    for body in worm:
-        if temp['x'] == body['x'] and temp['y'] == body['y']:
-            return True
-    return False
 
 
 def showGameOverScreen():
