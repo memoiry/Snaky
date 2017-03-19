@@ -1,5 +1,9 @@
 # Snaky
 
+Snaky is a projects including a basic one-player version, and three versions of AI to play Snake automatically.
+
+The project is implemented in Python.
+
 ### Require
 
 You should have `pygame` installed.
@@ -71,6 +75,8 @@ python snaky_ai_v3.py
 
 Enjoy!
 
+## Reference
 
+[AutomatedSnakeGameSolvers.pdf](http://sites.uci.edu/joana1/files/2016/12/AutomatedSnakeGameSolvers.pdf)
 
 
