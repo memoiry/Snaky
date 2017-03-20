@@ -183,7 +183,7 @@ def virtual_run(wormCoords, apple,direction):
             del wormCoords[-1] # remove worm's tail segment
             wormCoords.insert(0, newHead)
     result = cal_distance(wormCoords,wormCoords[-1])
-    for i in xrange(4):
+    for i in range(4):
         temp = update_dirc(wormCoords[HEAD],DIRECTION[i])
         if temp['x'] == wormCoords[-1]['x'] and temp['y'] == wormCoords[-1]['y']:
             result = False
@@ -196,7 +196,7 @@ def distance_(x,y):
 def any_possible_move(worm,apple,direction):
     temp_direc = direction
     max_dis = 0
-    for i in xrange(4):
+    for i in range(4):
         temp = update_dirc(worm[0],DIRECTION[i])
         if can_move((temp['x'],temp['y']),worm):
             if (distance_(temp, apple) > max_dis) and (examine_direction(DIRECTION[i], direction)):
@@ -220,7 +220,7 @@ def examine_direction(temp , direction):
     return True
 
 def check_head(worm,direction):
-    for i in xrange(4):
+    for i in range(4):
         temp = update_dirc(worm[HEAD], DIRECTION[i])
         if can_move((temp['x'],temp['y']),worm) and examine_direction(DIRECTION[i],direction):
             if distance[temp['y']][temp['x']] < 9999:

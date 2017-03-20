@@ -208,7 +208,7 @@ def runGame():
         else:
             print direction
             index_ = 0
-            for i in xrange(4):
+            for i in range(4):
                 temp = update_dirc(wormCoords[HEAD],DIRECTION[i])
                 if can_move(temp,wormCoords):
                     index_ = i
