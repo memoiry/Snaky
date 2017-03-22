@@ -80,5 +80,5 @@ Enjoy!
 
 [AutomatedSnakeGameSolvers.pdf](http://sites.uci.edu/joana1/files/2016/12/AutomatedSnakeGameSolvers)
 
-[Wormy]((https://github.com/asweigart/making-games-with-python-and-pygame/blob/master/wormy/wormy.py))
+[Wormy](https://github.com/asweigart/making-games-with-python-and-pygame/blob/master/wormy/wormy.py)
 
